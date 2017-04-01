@@ -242,14 +242,14 @@ dispatch( authLenses.set('user', user) );
 dispatch( authLenses.set('clickCount', x => x + 1) );
 ```
 
-#### viewSet :: [ key:String ] -> { key: value }
+#### viewSet :: [ key:String ] -> state:Object -> { key: value }
 
 ```
-authLenses.viewSet(['user'])
+authLenses.viewSet(['user'], state)
 // { user: { name: 'Bob' } }
 ```
 
-#### viewAll :: _ -> { key: value }
+#### viewAll :: _ -> state:Object -> { key: value }
 
 Same as viewSet, but it gives you values for all the lenses in the group.
 
@@ -279,7 +279,7 @@ const userEnhancedLens = authLenses.get('user');
 dispatch(userEnhancedLens.set(user));
 ```
 
-## request :: Promise -> Promise
+### request :: Promise -> Promise
 
 ```
 ...
@@ -288,7 +288,7 @@ dispatch(
 );
 ```
 
-## resetRequest :: _ -> Redux Action
+### resetRequest :: _ -> Redux Action
 
 Removes result and error and sets state at that lens to:
 ```
@@ -299,19 +299,19 @@ Removes result and error and sets state at that lens to:
 ## ConnectedLens
 Very similar API as EnhancedLens, except for connected lenses.
 
-## view :: _ -> Any
+### view :: _ -> Any
 ```
 const user = props.user.view()
 ```
 
-## set :: Any -> _ (Sets State)
+### set :: Any -> _ (Sets State)
 
 ```
 onClick: () => props.modalIsOpen.set(true)
 onClick: () => props.modalIsOpen.set(x => !x)
 ```
 
-## papp :: Any -> _ -> _ (Sets State)
+### papp :: Any -> _ -> _ (Sets State)
 
 Partially apply arguments for set.
 
@@ -320,7 +320,7 @@ onClick: props.modalIsOpen.papp(true)
 onClick: props.modalIsOpen.papp(x => !x)
 ```
 
-## request :: Promise -> Promise (Sets State)
+### request :: Promise -> Promise (Sets State)
 
 It may be cleaner to do requests in action creators, as demonstrated above.
 It is also available on the connect lens, if you want to use it in containers.
@@ -331,7 +331,7 @@ props.loginRequest.request( login(credentials) );
 
 Note:  The request method does not dispatch it's argument.
 
-## resetRequest :: _ -> _ (Sets State)
+### resetRequest :: _ -> _ (Sets State)
 
 Removes result and error and sets state at that lens to:
 ```

@@ -36,8 +36,8 @@ export default class LensGroup {
     return viewLenses(lensSet, ...rest);
   }
 
-  viewAll(state) {
-    return viewLenses(this.enhancedLenses, state);
+  viewAll(...args) {
+    return viewLenses(this.enhancedLenses, ...args);
   }
 
   set(key, ...rest) {
