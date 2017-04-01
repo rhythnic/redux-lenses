@@ -15,7 +15,7 @@ yarn add redux-lenses
 ## Process
 
 -  [Add Lens Reducer](#add-lens-reducer)
--  [Created a Lens Group](#create-a-lens-group)
+-  [Create a Lens Group](#create-a-lens-group)
 -  [Connect to Component](#connect-to-component)
 -  [Action Shape](#action-shape)
 -  [In Action Creators](#in-action-creators)
