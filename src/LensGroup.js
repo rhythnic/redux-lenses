@@ -1,4 +1,4 @@
-import R from 'ramda';
+import pick from 'ramda/src/pick';
 import { viewLenses, setStore } from './main';
 import EnhancedLens from './EnhancedLens';
 import connect from './connect';
@@ -28,7 +28,7 @@ export default class LensGroup {
   }
 
   pick(lensKeyList) {
-    return R.pick(lensKeyList, this.enhancedLenses);
+    return pick(lensKeyList, this.enhancedLenses);
   }
 
   viewSet(lensKeyList, ...rest) {
@@ -44,7 +44,7 @@ export default class LensGroup {
     this._checkKeyValidity(key);
     return setStore(this.enhancedLenses[key], ...rest);
   }
-  
+
   connect(lensKeyList) {
     return connect(this.pick(lensKeyList));
   }

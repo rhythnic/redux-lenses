@@ -3,14 +3,17 @@
 // Component and Hoc for putting ConnectedLenses on props
 // ******************************************************************************
 import React, { PropTypes as PT, createElement as h } from 'react';
-import R from 'ramda';
+import omit from 'ramda/src/omit';
+import pick from 'ramda/src/pick';
+import view from 'ramda/src/view';
+import merge from 'ramda/src/merge';
 import { viewLenses } from './main';
 import ConnectedLens from './ConnectedLens';
 
 // ******************************************************************************
 // Helpers
 // ******************************************************************************
-const omitOwnProps = R.omit(['enhancedLenses', 'component']);
+const omitOwnProps = omit(['enhancedLenses', 'component']);
 
 // ******************************************************************************
 // Interface
@@ -38,7 +41,7 @@ export class LensConnector extends React.Component {
   getLensValues() {
     const state = this.context.store.getState();
     return Object.keys(this.props.enhancedLenses).reduce((acc, key) => {
-      acc[key] = R.view(this.props.enhancedLenses[key].lens, state);
+      acc[key] = view(this.props.enhancedLenses[key].lens, state);
       return acc;
     }, {});
   }
@@ -46,7 +49,7 @@ export class LensConnector extends React.Component {
     const connectedLenses = this.state ? this.state.connectedLenses : {};
     return {
         values: allValues
-      , connectedLenses: R.merge(connectedLenses, this.connectLenses(changedValues))
+      , connectedLenses: merge(connectedLenses, this.connectLenses(changedValues))
       }
   }
   componentDidMount() {
@@ -60,7 +63,7 @@ export class LensConnector extends React.Component {
     const nextValues = this.getLensValues();
     const changed = this.lensKeys.filter(key => nextValues[key] !== this.state.values[key]);
     if (!changed.length) return;
-    this.setState(this.nextState(nextValues, R.pick(changed, nextValues)));
+    this.setState(this.nextState(nextValues, pick(changed, nextValues)));
   }
   connectLenses(lensValues) {
     const { props, context: { store } } = this;
