@@ -12,6 +12,12 @@ npm install --save redux-lenses
 yarn add redux-lenses
 ```
 
+## React dependency
+Although react is not in the title, this library currently has a peer dependency on React.
+Sometime in the future, I'll separate out the connect functionality to a separate library.
+For the time being, this library only supports using Redux with React.
+
+
 ## Process
 
 -  [Add Lens Reducer](#add-lens-reducer)
