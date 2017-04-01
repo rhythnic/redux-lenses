@@ -313,7 +313,7 @@ onClick: () => props.modalIsOpen.set(x => !x)
 
 ### papp :: Any -> _ -> _ (Sets State)
 
-Partially apply arguments for set.
+Partially apply argument for set.
 
 ```
 onClick: props.modalIsOpen.papp(true)
