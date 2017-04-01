@@ -7,7 +7,18 @@ using the standard pattern of action creator to reducer to connect is tedious to
 
 ## Process
 
-### Add lens reducer
+-  [Add Lens Reducer](#add-lens-reducer)
+-  [Created a Lens Group](#create-a-lens-group)
+-  [Connect to Component](#connect-to-component)
+-  [Action Shape](#action-shape)
+-  [In Action Creators](#in-action-creators)
+-  [Async Requests](#async-requests)
+-  [Using with React Redux](#react-redux)
+-  [API](#api)
+
+
+
+### <a name="add-lens-reducer"></a>Add lens reducer
 
 ```
 import { createStore, applyMiddleware } from 'redux';
@@ -37,7 +48,7 @@ const store = createStore(
 
 One area of state, such as auth, can be altered via the auth sub-reducer or Redux Lenses.
 
-### Create a lens group
+### <a name="create-lens-group"></a>Create a Lens Group
 
 Declare the absolute path of the lens within redux state.
 Default is used if value is undefined or null.
@@ -65,7 +76,7 @@ export default new LensGroup(
 );
 ```
 
-### Connect to Component
+### <a name="connect-to-component"></a>Connect to Component
 
 Use view() to get the current value.  Use set(value) to set the value.
 Set accepts a non-function value or an update function.
@@ -98,7 +109,7 @@ export default authLenses.connect(
 ```
 
 
-### Action Shape
+### <a name="action-shape"></a>Action Shape
 
 The redux action has this shape.  It contains info about the lens that can be used in debugging.
 
@@ -112,7 +123,7 @@ The redux action has this shape.  It contains info about the lens that can be us
 ```
 
 
-### In Action Creators
+### <a name="in-action-creators"></a>In Action Creators
 
 ```
 // auth/actions.js
@@ -133,7 +144,7 @@ export function setUser(user) {
 ```
 
 
-## Async Requests
+## <a name="async-requests"></a>Async Requests
 Redux Lenses offers a method called 'request' for managing the state around async requests,
 such as API calls to the server.  The request method accepts a promise as it's only argument.
 Make sure you've set the default value to an empty object in your lenses file.
@@ -175,7 +186,26 @@ There's no need to catch the errors.  Errors and results are captured in state.
 ```
 
 
-## API
+## <a name="react-redux"></a>Using with React Redux
+
+```
+function mapStateToProps(state) {
+  return {
+    ...authLenses.viewSet(['user'], state),
+    ...appLayoutLenses.viewAll(state)
+  };
+}
+
+export default connect(mapStateToProps);
+```
+
+Or simply
+```
+export default connect(authLenses.viewSet(['user']))
+```
+
+
+## <a name="api"></a>API
 
 ## LensGroup config object
 
