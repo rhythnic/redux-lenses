@@ -5,6 +5,13 @@ Abstractions that use Ramda lenses to interact with Redux store.
 [Redux](http://redux.js.org/) is an excellent tool for state management, but
 using the standard pattern of action creator to reducer to connect is tedious to do for each state variable.  Often people fall back to using React state. Redux Lenses is an attempt to make redux state management easier than React state management by using [Ramda](http://ramdajs.com/) lenses to mutate the redux state.
 
+## Install
+
+```
+npm install --save redux-lenses
+yarn add redux-lenses
+```
+
 ## Process
 
 -  [Add Lens Reducer](#add-lens-reducer)
