@@ -1,6 +1,6 @@
 {
   "name": "redux-lenses",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Abstractions for interacting with Redux state by using Ramda lenses.",
   "main": "lib/index.js",
   "jsnext:main": "es/index.js",
