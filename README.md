@@ -33,6 +33,8 @@ For the time being, this library only supports using Redux with React.
 
 ### <a name="add-lens-reducer"></a>Add lens reducer
 
+redux-thunk is required for using the [request method](#async-requests)
+
 ```
 import { createStore, applyMiddleware } from 'redux';
 import { lensReducer } from 'redux-lenses';
