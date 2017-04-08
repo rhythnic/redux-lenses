@@ -223,6 +223,12 @@ Or simply
 export default connect(authLenses.viewSet(['user']))
 ```
 
+One caveat of doing it this way is that the value passed to connect may have been transformed by your
+transform function, which you specify when creating the lens.  If you use a constructor
+in the transform, the value may appear as having changed when it hasn't, causing unnecessary
+renders.  To avoid this, you can use the lensGroup.connect method, which compares values
+prior to transformation.
+
 
 ## <a name="api"></a>API
 
