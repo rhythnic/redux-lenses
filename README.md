@@ -203,6 +203,10 @@ There's no need to catch the errors.  Errors and results are captured in state.
 
 ## <a name="react-redux"></a>Using with React Redux
 
+If you don't need to set the lens from within your component, you have the option of
+using the connect method from the react-redux package to put the value on to props.  When
+doing this, there is not "view()" method.  The value is available as the prop.
+
 ```
 function mapStateToProps(state) {
   return {
