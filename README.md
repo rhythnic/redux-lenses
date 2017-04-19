@@ -78,6 +78,7 @@ export default new LensGroup(
   { user:
     { path: ['auth', 'user']
     , default: null
+    , transform: value => new User(value)
     }
   , redirectLoginToReferer:
     { path: ['auth', 'redirectLoginToReferer']
@@ -90,6 +91,9 @@ export default new LensGroup(
   }
 );
 ```
+
+Only path is required.  Transform happens after default, so if the default value is being used,
+it will still run through the transform function.
 
 ### <a name="connect-to-component"></a>Connect to Component
 
