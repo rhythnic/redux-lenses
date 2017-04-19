@@ -2,7 +2,8 @@
 // Connect
 // Component and Hoc for putting ConnectedLenses on props
 // ******************************************************************************
-import React, { PropTypes as PT, createElement as h } from 'react';
+import React, { createElement as h } from 'react';
+import PT from 'prop-types';
 import omit from 'ramda/src/omit';
 import pick from 'ramda/src/pick';
 import view from 'ramda/src/view';
