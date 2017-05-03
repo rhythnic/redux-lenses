@@ -13,3 +13,7 @@ node_modules
 .node_repl_history
 
 .DS_STORE
+
+dist
+es
+lib
