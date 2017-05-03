@@ -1,3 +1,5 @@
+// @flow
+
 import curry from 'ramda/src/curry';
 import identity from 'ramda/src/identity';
 import over from 'ramda/src/over';
