@@ -1,51 +1,52 @@
 import pick from 'ramda/src/pick';
 import { viewLenses, setStore } from './main';
 import EnhancedLens from './EnhancedLens';
-import connect from './connect';
 
 
 export default class LensGroup {
-  constructor(lensSpecs) {
-    this.enhancedLenses = this._createEnhancedLenses(lensSpecs);
-    this.viewAll = this.viewAll.bind(this);
+  constructor({ basePath, lenses }) {
+    this.basePath = basePath;
+    this.enhancedLenses = this._createEnhancedLenses(basePath, lenses);
+    this.checkKey = this.checkKey.bind(this);
   }
 
-  _createEnhancedLenses(lensSpecs) {
-    return Object.keys(lensSpecs).reduce((acc, id) => {
-      acc[id] = new EnhancedLens(lensSpecs[id]);
+  _createEnhancedLenses(basePath, lenses) {
+    return Object.keys(lenses).reduce((acc, id) => {
+      let spec = typeof lenses[id] === 'function' ? { map: lenses[id] } : Object.assign({}, lenses[id]);
+      spec.id = id;
+      spec.path = [ ...basePath, ...(Array.isArray(spec.path) ? spec.path : [id]) ];
+      acc[id] = new EnhancedLens(spec);
       return acc;
     }, {});
   }
 
-  _checkKeyValidity(key) {
-    if (!this.enhancedLenses[key]) {
-      throw new Error('Invalid key passed to LensGroup:', key);
+  checkKey(id) {
+    if (!this.enhancedLenses[id]) {
+      throw new Error(`Invalid lens id '${id}' passed to LensGroup with basePath ${this.basePath.join(',')}`);
     }
   }
 
-  get(key) {
-    return this.enhancedLenses[key];
+  get(id) {
+    this.checkKey(id);
+    return this.enhancedLenses[id];
   }
 
   pick(lensKeyList) {
+    lensKeyList.forEach(this.checkKey)
     return pick(lensKeyList, this.enhancedLenses);
   }
 
-  viewSet(lensKeyList, ...rest) {
-    const lensSet = this.pick(lensKeyList);
-    return viewLenses(lensSet, ...rest);
+  view(lensKeyList, ...rest) {
+    return viewLenses(this.pick(lensKeyList), ...rest);
   }
 
   viewAll(...args) {
     return viewLenses(this.enhancedLenses, ...args);
   }
 
-  set(key, ...rest) {
-    this._checkKeyValidity(key);
-    return setStore(this.enhancedLenses[key], ...rest);
-  }
-
-  connect(lensKeyList) {
-    return connect(this.pick(lensKeyList));
+  set(idValObj) {
+    const ids = Object.keys(idValObj);
+    ids.forEach(this.checkKey);
+    return setStore(...ids.map(id => [ this.get(id), idValObj[id] ]));
   }
 }

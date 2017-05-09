@@ -1,48 +1,67 @@
-// @flow
-
 import curry from 'ramda/src/curry';
-import identity from 'ramda/src/identity';
 import over from 'ramda/src/over';
 import set from 'ramda/src/set';
+import identity from 'ramda/src/identity';
 
 
-export const viewLenses = curry((enhancedLenses: { }, state: {}) => {
+export const viewLenses = curry((enhancedLenses = {}, state = {}) => {
   return Object.keys(enhancedLenses).reduce((acc, id) => {
-    const val = enhancedLenses[id].view(state);
-    if (typeof val !== 'undefined') acc[id] = val;
+    acc[id] = enhancedLenses[id].view(state);
     return acc;
   }, {});
 });
 
 
-export const setStore = curry((
-  enhancedLense: { spec: { path: Array<string|number> }, lens: () => mixed },
-  value: any) => {
+export function setStore(...lensValuePairs) {
+  return lensValuePairs.length === 1
+    ? setSingleLens(lensValuePairs[0])
+    : setMultipleLenses(lensValuePairs);
+};
+
+
+export function setSingleLens([ { path, lens, id }, value ]) {
   return {
-      path: enhancedLense.spec.path
-    , lens: enhancedLense.lens
-    , type: 'SET_WITH_LENS'
-    , value
-    }
-});
+    reduxLensesSetType: 'single'
+  , type: `SET__${id}`
+  , lens
+  , value
+  , path
+  }
+}
 
-
-export function lensReducer(
-  reducer: (state: {}, action: { type: string, lens?: () => mixed, value?: any }) => {} = identity) {
-  return (state: {} = {}, action: { type: string, lens?: () => mixed, value?: any }): {} => {
-    switch(action.type) {
-    case 'SET_WITH_LENS':
-      return lensSetter(state, action);
-    default:
-      return reducer(state, action);
-    }
-  };
+export function setMultipleLenses(lensValuePairs) {
+  return {
+    reduxLensesSetType: 'multiple'
+  , type: `SET__${lensValuePairs.map(x => x[0].id).join(',')}`
+  , lensValuePairs
+  }
 }
 
 
-export function lensSetter(state: {}, action: { lens?: () => mixed, value?: any }) {
-  if (!action.lens) return state;
-  return typeof action.value === 'function'
-    ? over(action.lens, action.value, state)
-    : set(action.lens, action.value, state);
+export function lensReducer(reducer = identity) {
+  return (state, action) => {
+    switch(action.reduxLensesSetType) {
+      case 'single':
+        return singleLensSetter(state, action);
+      case 'multiple':
+        return multipleLensSetter(state, action);
+      default:
+        return reducer(state, action);
+    }
+  }
+}
+
+
+export function singleLensSetter(state, { lens, value }) {
+  if (!lens) return state;
+  return typeof value === 'function'
+    ? over(lens, value, state)
+    : set(lens, value, state);
+}
+
+
+export function multipleLensSetter(state, { lensValuePairs }) {
+  return lensValuePairs.reduce((acc, [ { lens }, value ]) => {
+    return singleLensSetter(acc, { lens, value });
+  }, state);
 }

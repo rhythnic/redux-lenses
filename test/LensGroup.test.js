@@ -1,19 +1,26 @@
 import R from 'ramda';
 import { lensGroup, lensSpecs } from './test-lenses';
+import EnhancedLens from '../src/EnhancedLens';
 
 
-let state = { layout: { drawerOpen: true, title: '' } };
+let state = { layout: { navDrawerOpen: true, appBarTitle: '' } };
 
 
-test('LensGroup structure', () => {
-  expect(lensGroup.get('appBarTitle').spec).toBe(lensSpecs.appBarTitle);
+test('LensGroup get', () => {
+  expect(lensGroup.get('navDrawerOpen')).toBeInstanceOf(EnhancedLens);
+  expect(() => lensGroup.get('badId')).toThrow();
 });
 
 
-test('LensGroup view', () => {
+test('LensGroup pick', () => {
+  expect(lensGroup.pick(['navDrawerOpen'])).toEqual({ navDrawerOpen: lensGroup.get('navDrawerOpen') });
+});
+
+
+test.only('LensGroup view', () => {
   let expected = { navDrawerOpen: true, appBarTitle: '' };
-  expect(lensGroup.viewSet(['navDrawerOpen', 'appBarTitle'], state)).toEqual(expected);
-  expect(lensGroup.viewAll(state)).toEqual(expected);
+  expect(lensGroup.view(['navDrawerOpen', 'appBarTitle'], state)).toEqual(expected);
+  expect(lensGroup.viewAll(state)).toEqual({ navDrawerOpen: true, appBarTitle: '', altTitleLens: '' });
 });
 
 

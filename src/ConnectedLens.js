@@ -4,19 +4,22 @@
 // ******************************************************************************
 
 export default class ConnectedLens {
-  constructor(enhancedLens, value, store) {
+  constructor(enhancedLens, value) {
     this._enhancedLens = enhancedLens;
     this.value = value;
-    this._store = store;
     this.resetRequest = this.resetRequest.bind(this);
   }
 
+  setDispatch(dispatch) {
+    if (!this._dispatch) this._dispatch = dispatch;
+  }
+
   view() {
-    return this._enhancedLens.getAlteredValue(this.value);
+    return this._enhancedLens.mapFn(this.value);
   }
 
   set(...args) {
-    return this._store.dispatch(this._enhancedLens.set(...args));
+    return this._dispatch(this._enhancedLens.set(...args));
   }
 
   papp(...args) {
@@ -24,10 +27,10 @@ export default class ConnectedLens {
   }
 
   request(...args) {
-    return this._store.dispatch(this._enhancedLens.request(...args));
+    return this._dispatch(this._enhancedLens.request(...args));
   }
 
   resetRequest() {
-    return this._store.dispatch(this._enhancedLens.resetRequest());
+    return this._dispatch(this._enhancedLens.resetRequest());
   }
 }
