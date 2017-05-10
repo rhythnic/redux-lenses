@@ -336,7 +336,7 @@ Same as view but it gives you values for all the lenses in the group.
 
 
 
-## EnhancedLens
+## EnhancedLens class
 Class for interacting with one lens that hasn't yet been connected.
 Mostly this is inside of action creators.
 
@@ -372,7 +372,7 @@ Resets request state to:
 ```
 
 
-## ConnectedLens
+## ConnectedLens class
 Very similar API as EnhancedLens, except for connected lenses.
 This is the API inside of your components.
 
