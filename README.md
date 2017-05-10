@@ -1,9 +1,11 @@
 # redux-lenses
-Abstractions that use Ramda lenses to interact with Redux store.
+Abstractions that use Ramda lenses to interact with the Redux store.
 
 ## Motivation
 [Redux](http://redux.js.org/) is an excellent tool for state management, but
-using the standard pattern of action creator to reducer to connect is tedious to do for each state variable.  Often people fall back to using React state. Redux Lenses is an attempt to make redux state management easier than React state management by using [Ramda](http://ramdajs.com/) lenses to mutate the redux state.
+using the standard pattern of action creator to reducer to connect is tedious to do for each state variable.
+Often people fall back to using React state. Redux Lenses is an attempt to make Redux state management
+easier than React state management by using [Ramda](http://ramdajs.com/) lenses to mutate the Redux state.
 
 ## Install
 
@@ -12,13 +14,59 @@ npm install --save redux-lenses
 yarn add redux-lenses
 ```
 
-## React dependency
-Although react is not in the title, this library currently has a peer dependency on React.
-Sometime in the future, I'll separate out the connect functionality to a separate library.
-For the time being, this library only supports using Redux with React.
+## React Example
+
+This is the authentication example from the [React Router docs](https://reacttraining.com/react-router/web/example/auth-workflow),
+with React state changed to Redux state via redux-lenses.  One of the benefits of using redux-lenses is that value
+and the setter are one prop instead of 2 props.
+
+```
+...
+import authLenses from '../lenses';
+import { connectLenses } from 'redux-lenses';
+import { connect } from 'react-redux';
 
 
-## Process
+class Login extends React.Component {
+
+  componentWillMount() {
+    this.props.redirectLoginToReferrer.set(false);
+  }
+
+  login = () => {
+    fakeAuth.authenticate(() => {
+      this.props.redirectLoginToReferrer.set(true);
+    })
+  }
+
+  render() {
+    const { from } = this.props.location.state || { from: { pathname: '/' } }
+
+    if (this.props.redirectLoginToReferrer.view()) {
+      return (
+        <Redirect to={from}/>
+      )
+    }
+
+    return (
+      <div>
+        <p>You must log in to view the page at {from.pathname}</p>
+        <button onClick={this.login}>Log in</button>
+      </div>
+    )
+  }
+}
+
+
+export default connect(
+  ...connectLenses(
+    [ authLenses.pick(['redirectLoginToReferrer']) ]  
+  )
+)(Login);
+```
+
+
+## Piece-By-Piece
 
 -  [Add Lens Reducer](#add-lens-reducer)
 -  [Create a Lens Group](#create-a-lens-group)
@@ -65,35 +113,36 @@ One area of state, such as auth, can be altered via the auth sub-reducer or Redu
 
 ### <a name="create-lens-group"></a>Create a Lens Group
 
-Declare the absolute path of the lens within redux state.
-Default is used if value is undefined or null.
-
 ```
 // auth/lenses.js
 
 import { LensGroup } from 'redux-lenses';
 import User from './models/User';
+import R from 'ramda';
 
 export default new LensGroup(
-  { user:
-    { path: ['auth', 'user']
-    , default: null
-    , transform: value => new User(value)
-    }
-  , redirectLoginToReferer:
-    { path: ['auth', 'redirectLoginToReferer']
-    , default: false
-    }
-  , loginRequest:
-    { path: ['auth', 'loginRequest']
-    , default: {}
+  { basePath: ['auth']
+  , lenses:
+    { user: data => new User(data)
+    , redirectLoginToReferer: R.defaultTo(false)
+    , loginRequest:
+      { path: ['requests', 'login']
+      , map: R.defaultTo({})
+      }
     }
   }
 );
 ```
 
-Only path is required.  Transform happens after default, so if the default value is being used,
-it will still run through the transform function.
+The object passed to the LensGroup constructor accepts basePath and lenses properties.
+Let's start with loginRequest.  If the lens config is an object, it accepts path and map
+properties.  The basePath is prepended to this path, so the path of loginRequest within
+state is ['auth', 'requests', 'login'].  The map function gives you a chance to map the
+value after retrieving the value from state.  This is how you declare default values.
+Instead of passing an object for lens configuration, you can just pass the map function.
+If you do this, the object key is used for the path, so in this example, the path to
+user in state is ['auth', 'user'].
+
 
 ### <a name="connect-to-component"></a>Connect to Component
 
@@ -103,11 +152,13 @@ Set accepts a non-function value or an update function.
 ```
 // auth/containers/Login.js
 
-...
 import authLenses from '../lenses';
+import { connectLenses } from 'redux-lenses';
+import { connect } from 'react-redux';
+
 
 class Login extends React.Component {
-  componentWillUnmount() {
+  componentWillMount() {
     this.props.redirectLoginToReferrer.set(false);
   }
   render() {
@@ -122,9 +173,11 @@ class Login extends React.Component {
   }
 }
 
-export default authLenses.connect(
-  ['user', 'redirectLoginToReferer']
-)(Login)
+export default connect(
+  ...connectLenses(
+    [ authLenses.pick('redirectLoginToReferrer') ]  
+  )
+)(Login);
 ```
 
 
@@ -232,6 +285,13 @@ transform function, which you specify when creating the lens.  If you use a cons
 in the transform, the value may appear as having changed when it hasn't, causing unnecessary
 renders.  To avoid this, you can use the lensGroup.connect method, which compares values
 prior to transformation.
+
+
+## Framework compatibility
+Redux-Lenses, like Redux, isn't specific to React.  Redux-Lenses should work anywhere Redux works.
+The included connect function is built to match the API of React-Redux.  Redux-Lenses might not be
+compatible with the bindings for other frameworks, so you may have to write custom connect code to
+use Redux-Lenses with frameworks other than React.
 
 
 ## <a name="api"></a>API

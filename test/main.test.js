@@ -1,6 +1,6 @@
 import { viewLenses, setStore, lensReducer, singleLensSetter, multipleLensSetter } from '../src/main';
 import R from 'ramda';
-import { lensGroup, lensSpecs } from './test-lenses';
+import { lensGroup } from './test-lenses';
 
 
 let state = { layout: { navDrawerOpen: true, appBarTitle: '' } };

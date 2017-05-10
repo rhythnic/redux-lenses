@@ -17,7 +17,7 @@ test('LensGroup pick', () => {
 });
 
 
-test.only('LensGroup view', () => {
+test('LensGroup view', () => {
   let expected = { navDrawerOpen: true, appBarTitle: '' };
   expect(lensGroup.view(['navDrawerOpen', 'appBarTitle'], state)).toEqual(expected);
   expect(lensGroup.viewAll(state)).toEqual({ navDrawerOpen: true, appBarTitle: '', altTitleLens: '' });
