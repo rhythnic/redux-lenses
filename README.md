@@ -123,74 +123,94 @@ import R from 'ramda';
 export default new LensGroup(
   { basePath: ['auth']
   , lenses:
-    { user: data => new User(data)
-    , redirectLoginToReferer: R.defaultTo(false)
-    , loginRequest:
+    { loginRequest:
       { path: ['requests', 'login']
       , map: R.defaultTo({})
       }
+    , user: {}
+    , redirectLoginToReferrer: R.defaultTo(false)
     }
   }
 );
 ```
 
-The object passed to the LensGroup constructor accepts basePath and lenses properties.
-Let's start with loginRequest.  If the lens config is an object, it accepts path and map
-properties.  The basePath is prepended to this path, so the path of loginRequest within
-state is ['auth', 'requests', 'login'].  The map function gives you a chance to map the
-value after retrieving the value from state.  This is how you declare default values.
+The object passed to the LensGroup constructor accepts basePath and lenses.
+Let's start with loginRequest.  The lens config object accepts path and map
+properties.  The basePath of the lens group is prepended to this path,
+so the path of loginRequest within state is ['auth', 'requests', 'login'].
+The map function gives you a chance to map the value after retrieving the value from state.
+This is how you declare default values, use constructors, or reach in to just use
+one part of the data.
+Now let's look at user.  We don't want to specify a path or map function for user.
+The path of user in state will be ['auth', 'user'];
+
+
 Instead of passing an object for lens configuration, you can just pass the map function.
-If you do this, the object key is used for the path, so in this example, the path to
-user in state is ['auth', 'user'].
+That's how redirectLoginToReferrer is configured.  Because the path isn't spedified, it will
+be ['auth', 'redirectLoginToReferrer'];
+
 
 
 ### <a name="connect-to-component"></a>Connect to Component
 
-Use view() to get the current value.  Use set(value) to set the value.
-Set accepts a non-function value or an update function.
+Use view() to get the current value.
+Use set(value) or set(value => nextValue) to set the value.
 
 ```
-// auth/containers/Login.js
-
-import authLenses from '../lenses';
+// I didn't show the creation of the layout lenses.
+import layoutLenses from '../lenses';
+import authLenses from '../../auth/lenses';
 import { connectLenses } from 'redux-lenses';
 import { connect } from 'react-redux';
+import { logout } from '../../auth/actions';
 
 
-class Login extends React.Component {
+class AppLayout extends React.Component {
   componentWillMount() {
-    this.props.redirectLoginToReferrer.set(false);
+    this.props.drawerOpen.set(false);
   }
   render() {
     const { props } = this;
-    const user = props.user.view();
-    const { from } = props.location.state || { from: { pathname: '/' } };
-    if (props.redirectLoginToReferrer.view()) {
-      return <Redirect to={from} />;
-    }
-
-    ...
+    return (
+      <div>
+        <AppBar>
+          {!!props.user.view() &&
+          <DrawerToggleButton onClick={() => props.drawerOpen.set(x => !x)} />}
+          <LogoutButton onClick={props.logout}/>
+        </AppBar>
+        <Drawer
+          onRequestClose={() => props.drawerOpen.set(false)}
+          open={props.drawerOpen.view()}
+        />
+      </div>
+    );
   }
 }
 
 export default connect(
   ...connectLenses(
-    [ authLenses.pick('redirectLoginToReferrer') ]  
+    [ layoutLenses.pick(['drawerOpen'])
+    , authLenses.pick(['user'])
+    ]
+  , { logout }
   )
-)(Login);
+)(AppLayout);
 ```
+
+You can pass action creators into the second argument of connectLenses.
+It doesn't currently accept a function.  It should be an object of action creator functions.
 
 
 ### <a name="action-shape"></a>Action Shape
 
-The redux action has this shape.  It contains info about the lens that can be used in debugging.
+The redux actions that get created when you call set have information about the lens
+that you can use in debugging
 
 ```
-{
-  path: [ String ],      // path specified when creating lens
-  lens: Function         // result of calling Ramda lensPath(path)
-  type: 'SET_WITH_LENS',
-  value                  // value or update function
+{ type: 'SET__drawerOpen'
+, path: [ 'auth', 'drawerOpen' ]
+, value
+, ...
 }
 ```
 
@@ -204,13 +224,31 @@ The redux action has this shape.  It contains info about the lens that can be us
 import authLenses from './lenses';
 
 
+export function login(credentials) {
+  return dispatch => {
+    const promise = authService.login(credentials).then(user => {
+      dispatch(setUser(user));
+    });
+    cosnt loginRq = authLenses.get('loginRequest');
+    return dispatch(loginRq.request(promise));
+  }
+}
+
+
 export function setUser(user) {
+  return authLenses.set({ user, redirectLoginToReferrer: !!user }));
+}
+
+
+export function logout() {
   return (dispatch, getState) => {
     const state = getState();
-    const lastUser = authLenses.get('user').view(state);
-    dispatch(authLenses.set('user', user));
-    ...
-    return user;
+    const user = authLenses.get('user').view(state);
+    alert(`Goodbye ${user.name}`);
+
+    return dispatch(authLenses.get('logoutRequest').request(
+      authService.logout().then(() => dispatch(setUser()))
+    ));
   }
 }
 ```
@@ -219,34 +257,13 @@ export function setUser(user) {
 ## <a name="async-requests"></a>Async Requests
 Redux Lenses offers a method called 'request' for managing the state around async requests,
 such as API calls to the server.  The request method accepts a promise as it's only argument.
-Make sure you've set the default value to an empty object in your lenses file.
+It helps to use an empty object as the default when you create the lens.  See the above
+code for an example.
 
-```
-// auth/actions.js
-
-...
-import authLenses from './lenses';
-
-
-export function login(credentials) {
-  return dispatch => {
-    const promise =
-      fetch('/api/users/login', { method: 'POST', data: credentials })
-        .then(response => response.json())
-        .then(user => dispatch(setUser(user));
-
-    return dispatch(
-      authLenses.get('loginRequest').request(promise)
-    );
-  }
-}
-```
-
+Request tracks the state of an async request.
 There's no need to catch the errors.  Errors and results are captured in state.
 
 ```
-// state.auth.loginRequest
-
 // right after the request method is called, the state is set to:
 { inProgress: true, completed: false }
 
@@ -258,35 +275,6 @@ There's no need to catch the errors.  Errors and results are captured in state.
 ```
 
 
-## <a name="react-redux"></a>Using with React Redux
-
-If you don't need to set the lens from within your component, you have the option of
-using the connect method from the react-redux package to put the value on to props.  When
-doing this, there is not "view()" method.  The value is available as the prop.
-
-```
-function mapStateToProps(state) {
-  return {
-    ...authLenses.viewSet(['user'], state),
-    ...appLayoutLenses.viewAll(state)
-  };
-}
-
-export default connect(mapStateToProps);
-```
-
-Or simply
-```
-export default connect(authLenses.viewSet(['user']))
-```
-
-One caveat of doing it this way is that the value passed to connect may have been transformed by your
-transform function, which you specify when creating the lens.  If you use a constructor
-in the transform, the value may appear as having changed when it hasn't, causing unnecessary
-renders.  To avoid this, you can use the lensGroup.connect method, which compares values
-prior to transformation.
-
-
 ## Framework compatibility
 Redux-Lenses, like Redux, isn't specific to React.  Redux-Lenses should work anywhere Redux works.
 The included connect function is built to match the API of React-Redux.  Redux-Lenses might not be
@@ -294,23 +282,10 @@ compatible with the bindings for other frameworks, so you may have to write cust
 use Redux-Lenses with frameworks other than React.
 
 
+
 ## <a name="api"></a>API
 
-## LensGroup config object
-
-```
-{ uniqueLensIdentifier:
-  { path: ["absolute", "path"]
-  , initial: "Value used if undefined in state"
-  , default: "Value used if null in state, or undefined if initial not included"
-  , transform: functionForTransformingValue
-  }
-}
-```
-
-## LensGroup
-Class for interacting with a group of lenses.
-
+## LensGroup class
 
 #### get :: String -> EnhancedLens
 
@@ -324,35 +299,29 @@ authLenses.get('user')
 authLenses.pick(['user', 'loginRequest'])
 ```
 
-#### set :: String -> Any -> Redux Action
+#### set :: { key: value|updateFunction } -> Redux Action
 
 ```
-dispatch( authLenses.set('user', user) );
-dispatch( authLenses.set('clickCount', x => x + 1) );
+dispatch( authLenses.set({ user }));
+dispatch( authLenses.set({ clickCount: x => x + 1 }));
 ```
 
-#### viewSet :: [ key:String ] -> state:Object -> { key: value }
+#### view :: [ key:String ] -> state:Object -> { key: value }
 
 ```
-authLenses.viewSet(['user'], state)
+authLenses.view(['user'], state)
 // { user: { name: 'Bob' } }
 ```
 
-#### viewAll :: _ -> state:Object -> { key: value }
+#### viewAll :: state:Object -> { key: value }
 
-Same as viewSet, but it gives you values for all the lenses in the group.
+Same as view but it gives you values for all the lenses in the group.
 
-### connect :: [ key:String ] -> { key: ConnectedLens }
-
-Connect is a Higher Order Component
-
-```
-authLenses.connect(['user'])(MyComponent)
-```
 
 
 ## EnhancedLens
-Class for interacting with one lens.
+Class for interacting with one lens that hasn't yet been connected.
+Mostly this is inside of action creators.
 
 ### view :: Object -> Any
 
@@ -361,25 +330,26 @@ const userEnhancedLens = authLenses.get('user');
 const user = userEnhancedLens.view(state);
 ```
 
-### set :: Any -> Redux Action
+### set :: value|updateFunction -> Redux Action
 
 ```
 const userEnhancedLens = authLenses.get('user');
 dispatch(userEnhancedLens.set(user));
 ```
 
-### request :: Promise -> Promise
+### request :: Promise -> ReduxThunkFunction(Action)
+The result of dispatching the thunk action is the result of the promise.
+If there is an error, the error is caught, and the result is { error };
 
 ```
-...
-dispatch(
+const promiseResult = dispatch(
   authLenses.get('loginRequest').request(loginPromise)
 );
 ```
 
 ### resetRequest :: _ -> Redux Action
+Resets request state to:
 
-Removes result and error and sets state at that lens to:
 ```
 { inProgress: false, completed: false }
 ```
@@ -387,42 +357,41 @@ Removes result and error and sets state at that lens to:
 
 ## ConnectedLens
 Very similar API as EnhancedLens, except for connected lenses.
+This is the API inside of your components.
 
 ### view :: _ -> Any
 ```
 const user = props.user.view()
 ```
 
-### set :: Any -> _ (Sets State)
+### set :: value|updateFunction -> (dispatches action to set state)
 
 ```
 onClick: () => props.modalIsOpen.set(true)
 onClick: () => props.modalIsOpen.set(x => !x)
 ```
 
-### papp :: Any -> _ -> _ (Sets State)
-
-Partially apply argument for set.
+### papp :: value|updateFunction -> _ -> (dispatches action to set state)
+Papp stands for "partially apply".
+It's an alternative to creating anonymous functions.
 
 ```
 onClick: props.modalIsOpen.papp(true)
 onClick: props.modalIsOpen.papp(x => !x)
 ```
 
-### request :: Promise -> Promise (Sets State)
-
-It may be cleaner to do requests in action creators, as demonstrated above.
-It is also available on the connect lens, if you want to use it in containers.
+### request :: Promise -> (dispatches actions to set state)
+Will set state twice, once initially, and once when the promise resolves or rejects.
+Request does not dispatch the promise.  In this example, we're assuming
+login was already bound to dispatch.
 
 ```
 props.loginRequest.request( login(credentials) );
 ```
 
-Note:  The request method does not dispatch it's argument.
+### resetRequest :: _ -> (dispatches action to set state)
+Resets request state to:
 
-### resetRequest :: _ -> _ (Sets State)
-
-Removes result and error and sets state at that lens to:
 ```
 { inProgress: false, completed: false }
 ```
