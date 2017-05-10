@@ -10,8 +10,8 @@ easier than React state management by using [Ramda](http://ramdajs.com/) lenses 
 ## Install
 
 ```
-npm install --save redux-lenses
-yarn add redux-lenses
+npm install --save redux-lenses@next
+yarn add redux-lenses@next
 ```
 
 ## React Example
