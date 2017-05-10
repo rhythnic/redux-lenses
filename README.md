@@ -8,6 +8,12 @@ can read the docs to see what you will need to do to upgrade.
 
 [Redux Lenses V1 Docs](https://github.com/rhythnic/redux-lenses/tree/v1)
 
+v1 Install
+```
+npm install --save redux-lenses@next
+yarn add redux-lenses@next
+```
+
 
 ## Motivation
 [Redux](http://redux.js.org/) is an excellent tool for state management, but
