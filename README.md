@@ -17,7 +17,7 @@ yarn add redux-lenses
 ## React Example
 
 This is the authentication example from the [React Router docs](https://reacttraining.com/react-router/web/example/auth-workflow),
-with React state changed to Redux state via redux-lenses.  One of the benefits of using redux-lenses is that value
+with React state changed to Redux state via Redux Lenses.  One of the benefits of using Redux Lenses is that value
 and the setter are one prop instead of 2 props.
 
 ```
@@ -95,7 +95,7 @@ const store = createStore(
 );
 ```
 
-To use redux lenses with another reducer, pass that reducer to lensReducer.
+To use Redux Lenses with another reducer, pass that reducer to lensReducer.
 
 ```
 ...
@@ -117,7 +117,6 @@ One area of state, such as auth, can be altered via the auth sub-reducer or Redu
 // auth/lenses.js
 
 import { LensGroup } from 'redux-lenses';
-import User from './models/User';
 import R from 'ramda';
 
 export default new LensGroup(
@@ -139,8 +138,9 @@ Let's start with loginRequest.  The lens config object accepts path and map
 properties.  The basePath of the lens group is prepended to this path,
 so the path of loginRequest within state is ['auth', 'requests', 'login'].
 The map function gives you a chance to map the value after retrieving the value from state.
-This is how you declare default values, use constructors, or reach in to just use
-one part of the data.
+This is how you declare default values, use constructors, or alter the value however you'd like.
+
+
 Now let's look at user.  We don't want to specify a path or map function for user.
 The path of user in state will be ['auth', 'user'];
 
@@ -171,10 +171,12 @@ class AppLayout extends React.Component {
   }
   render() {
     const { props } = this;
+    const user = props.user.view();
+
     return (
       <div>
         <AppBar>
-          {!!props.user.view() &&
+          {!!user &&
           <DrawerToggleButton onClick={() => props.drawerOpen.set(x => !x)} />}
           <LogoutButton onClick={props.logout}/>
         </AppBar>
@@ -203,7 +205,7 @@ It doesn't currently accept a function.  It should be an object of action creato
 
 ### <a name="action-shape"></a>Action Shape
 
-The redux actions that get created when you call set have information about the lens
+The redux actions that get created when you call "set" have information about the lens
 that you can use in debugging
 
 ```
@@ -224,26 +226,25 @@ that you can use in debugging
 import authLenses from './lenses';
 
 
-export function login(credentials) {
-  return dispatch => {
-    const promise = authService.login(credentials).then(user => {
-      dispatch(setUser(user));
-    });
-    cosnt loginRq = authLenses.get('loginRequest');
-    return dispatch(loginRq.request(promise));
-  }
-}
-
-
 export function setUser(user) {
   return authLenses.set({ user, redirectLoginToReferrer: !!user }));
 }
 
 
+export function login(credentials) {
+  return dispatch => {
+    const promise = authService.login(credentials).then(user => {
+      dispatch(setUser(user));
+    });
+    const loginRq = authLenses.get('loginRequest');
+    return dispatch(loginRq.request(promise));
+  }
+}
+
+
 export function logout() {
   return (dispatch, getState) => {
-    const state = getState();
-    const user = authLenses.get('user').view(state);
+    const { user } = authLenses.view(['user'], getState());
     alert(`Goodbye ${user.name}`);
 
     return dispatch(authLenses.get('logoutRequest').request(
@@ -255,10 +256,10 @@ export function logout() {
 
 
 ## <a name="async-requests"></a>Async Requests
-Redux Lenses offers a method called 'request' for managing the state around async requests,
-such as API calls to the server.  The request method accepts a promise as it's only argument.
-It helps to use an empty object as the default when you create the lens.  See the above
-code for an example.
+Redux-lenses offers a method called 'request' for managing the state around async requests,
+The request method accepts a promise as it's only argument.
+It helps to use an empty object as the default when you create the lens.
+See the above code for an example.
 
 Request tracks the state of an async request.
 There's no need to catch the errors.  Errors and results are captured in state.
@@ -274,12 +275,28 @@ There's no need to catch the errors.  Errors and results are captured in state.
 { inProgress: false, completed: true, error }
 ```
 
+Then in your components, it's trivial to show results and errors.
+Here, ErrorText is a component that will only show a message if error has a value.
+
+```
+function LoginForm(props) {
+  return (
+    <form>
+      <input name="email" />
+      <input name="password" type="password" />
+      <button onClick={props.login}>Login</button>
+      <ErrorText error={props.loginRequest.view().error} />
+    </div>
+  );
+}
+```
+
 
 ## Framework compatibility
-Redux-Lenses, like Redux, isn't specific to React.  Redux-Lenses should work anywhere Redux works.
-The included connect function is built to match the API of React-Redux.  Redux-Lenses might not be
-compatible with the bindings for other frameworks, so you may have to write custom connect code to
-use Redux-Lenses with frameworks other than React.
+Redux Lenses, like Redux, isn't specific to React.  Redux Lenses should work anywhere Redux works.
+The included connectLenses function is built to match the API of React-Redux.  Redux Lenses might not be
+compatible with the bindings for other frameworks, so you may have to write custom connect code to connect
+Redux Lenses with the components of frameworks other than React.
 
 
 
