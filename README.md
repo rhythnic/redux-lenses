@@ -1,6 +1,14 @@
 # redux-lenses
 Abstractions that use Ramda lenses to interact with Redux store.
 
+## New version available
+Version 1.0.0 is available.  It has breaking changes.  If you are just getting started
+with Redux Lenses, I recommend using v1.  If you are already using Redux Lenses, you
+can read the docs to see what you will need to do to upgrade.
+
+[Redux Lenses V1 Docs](https://github.com/rhythnic/redux-lenses/tree/v1)
+
+
 ## Motivation
 [Redux](http://redux.js.org/) is an excellent tool for state management, but
 using the standard pattern of action creator to reducer to connect is tedious to do for each state variable.  Often people fall back to using React state. Redux Lenses is an attempt to make redux state management easier than React state management by using [Ramda](http://ramdajs.com/) lenses to mutate the redux state.
