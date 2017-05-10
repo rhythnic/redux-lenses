@@ -1,4 +1,4 @@
-# redux-lenses
+# redux-lenses v1
 Abstractions that use Ramda lenses to interact with the Redux store.
 
 ## Motivation
