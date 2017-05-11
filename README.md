@@ -1,4 +1,4 @@
-# redux-lenses v0.1.5
+# redux-lenses v0.1.6
 Abstractions that use Ramda lenses to interact with Redux store.
 
 ## New version available
