@@ -1,18 +1,12 @@
-# redux-lenses
+# redux-lenses v0.1.5
 Abstractions that use Ramda lenses to interact with Redux store.
 
 ## New version available
-Version 1.0.0 is available.  It has breaking changes.  If you are just getting started
+Version 1.0.0 is available by installing @next.  It has breaking changes.  If you are just getting started
 with Redux Lenses, I recommend using v1.  If you are already using Redux Lenses, you
 can read the docs to see what you will need to do to upgrade.
 
 [Redux Lenses V1 Docs](https://github.com/rhythnic/redux-lenses/tree/v1)
-
-v1 Install
-```
-npm install --save redux-lenses@next
-yarn add redux-lenses@next
-```
 
 
 ## Motivation
