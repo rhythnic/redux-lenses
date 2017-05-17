@@ -206,7 +206,7 @@ LensGroup.connect takes a list of lens IDs and returns a function which in turn 
 When you call that fn with state, you get back and object of Connected Lenses.
 These Connected Lenses don't yet have access to dispatch.
 Use bindLenses or bindLensesAndActionCreators to give dispatch to the Connected Lenses.
-That means that you mapDispatchToProps function has to put dispatch on props.  This happens when you
+Your mapDispatchToProps function has to put dispatch on props.  This happens when you
 pass null, or alternatively you could explicitly put dispatch on props.
 
 ```
