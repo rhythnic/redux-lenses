@@ -17,7 +17,7 @@ export default class EnhancedLens {
     return this._mapFn(view(this.lens, state));
   }
 
-  transform(val) {
+  applyMap(val) {
     return this._mapFn(val);
   }
 

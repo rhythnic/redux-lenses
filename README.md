@@ -11,14 +11,12 @@ easier than React state management by using [Ramda](http://ramdajs.com/) lenses 
 
 ```
 npm install --save redux-lenses@next
-yarn add redux-lenses@next
 ```
 
 ## React Example
 
 This is the authentication example from the [React Router docs](https://reacttraining.com/react-router/web/example/auth-workflow),
-with React state changed to Redux state via Redux Lenses.  One of the benefits of using Redux Lenses is that value
-and the setter are one prop instead of 2 props.
+with React state changed to Redux state via Redux Lenses.
 
 ```
 ...
@@ -180,7 +178,7 @@ class AppLayout extends React.Component {
         <AppBar>
           {!!user &&
           <DrawerToggleButton onClick={() => props.drawerOpen.set(x => !x)} />}
-          <LogoutButton onClick={props.logout}/>
+          <LogoutButton onClick={props.logout} />
         </AppBar>
         <Drawer
           onRequestClose={() => props.drawerOpen.set(false)}
@@ -299,7 +297,7 @@ function LoginForm(props) {
 
 
 ### <a name="reselect"></a>Computed Props and Reselect
-[Reselect](https://github.com/reactjs/reselect) is the recommended way for deriving computed props from your redux state.
+[Reselect](https://github.com/reactjs/reselect) is the recommended way for deriving computed props from your Redux state.
 The EnhancedLens.view method is what Reselect refers to as an input-selector.
 Here is a reselect example rewritten with Redux Lenses.
 
@@ -409,7 +407,7 @@ Resets request state to:
 { inProgress: false, completed: false }
 ```
 
-### transform :: Any -> Any
+### applyMap :: value -> mappedValue
 This allows you to transform a value via the EnhancedLens's map function, which
 you specify when creating the LensGroup.  This is used by the ConnectedLens and
 not something you'll likely ever use.

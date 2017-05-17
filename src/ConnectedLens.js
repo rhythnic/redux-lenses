@@ -15,7 +15,7 @@ export default class ConnectedLens {
   }
 
   view() {
-    return this._enhancedLens.transform(this.value);
+    return this._enhancedLens.applyMap(this.value);
   }
 
   dispatch(...args) {
