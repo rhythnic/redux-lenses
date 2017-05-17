@@ -9,11 +9,16 @@ export default class EnhancedLens {
     this.id = id;
     this.path = path;
     this.lens = lensPath(path);
-    this.mapFn = typeof map === 'function' ? map : identity;
+    this._mapFn = typeof map === 'function' ? map : identity;
+    this.view = this.view.bind(this);
   }
 
   view(state) {
-    return this.mapFn(view(this.lens, state));
+    return this._mapFn(view(this.lens, state));
+  }
+
+  applyMap(val) {
+    return this._mapFn(val);
   }
 
   set(val) {
