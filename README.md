@@ -3,7 +3,7 @@ Abstractions that use Ramda lenses to interact with the Redux store.
 
 ## Motivation
 [Redux](http://redux.js.org/) is an excellent tool for state management, but
-using the standard pattern of action creator to reducer to connect is tedious to do for each state variable.
+using the standard pattern of action creator to reducer is tedious to do for each state variable.
 Often people fall back to using React state. Redux Lenses is an attempt to make Redux state management
 easier than React state management by using [Ramda](http://ramdajs.com/) lenses to mutate the Redux state.
 
@@ -23,7 +23,7 @@ and the setter are one prop instead of 2 props.
 ```
 ...
 import authLenses from '../lenses';
-import { connectLenses } from 'redux-lenses';
+import { bindLenses } from 'redux-lenses';
 import { connect } from 'react-redux';
 
 
@@ -59,9 +59,9 @@ class Login extends React.Component {
 
 
 export default connect(
-  ...connectLenses(
-    [ authLenses.pick(['redirectLoginToReferrer']) ]  
-  )
+  authLenses.connect(['redirectLoginToReferrer']),
+  null,
+  bindLenses
 )(Login);
 ```
 
@@ -74,7 +74,8 @@ export default connect(
 -  [Action Shape](#action-shape)
 -  [In Action Creators](#in-action-creators)
 -  [Async Requests](#async-requests)
--  [Using with React Redux](#react-redux)
+-  [Computed Props and Reselect](#reselect)
+-  [Framework Compatibility](#framework-compatibility)
 -  [API](#api)
 
 
@@ -160,8 +161,9 @@ Use set(value) or set(value => nextValue) to set the value.
 // I didn't show the creation of the layout lenses.
 import layoutLenses from '../lenses';
 import authLenses from '../../auth/lenses';
-import { connectLenses } from 'redux-lenses';
+import { bindLenses } from 'redux-lenses';
 import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
 import { logout } from '../../auth/actions';
 
 
@@ -189,18 +191,22 @@ class AppLayout extends React.Component {
   }
 }
 
+function mapStateToProps(state) {
+  return {
+    ...layoutLenses.connect(['drawerOpen'])(state),
+    ...authLenses.connect(['user'])(state)
+  };
+}
+
 export default connect(
-  ...connectLenses(
-    [ layoutLenses.pick(['drawerOpen'])
-    , authLenses.pick(['user'])
-    ]
-  , { logout }
-  )
+  mapStateToProps
+  dispatch => ({ dispatch, ...bindActionCreators({ logout }, dispatch) }),
+  bindLenses
 )(AppLayout);
 ```
 
-You can pass action creators into the second argument of connectLenses.
-It doesn't currently accept a function.  It should be an object of action creator functions.
+bindLenses needs access to dispatch, so dispatch needs to be put on props by your mapDispatchToProps
+function.  You can also pass null as mapDispatchToProps.
 
 
 ### <a name="action-shape"></a>Action Shape
@@ -292,11 +298,37 @@ function LoginForm(props) {
 ```
 
 
-## Framework compatibility
+### <a name="reselect"></a>Computed Props and Reselect
+[Reselect](https://github.com/reactjs/reselect) is the recommended way for deriving computed props from your redux state.
+The EnhancedLens.view method is what Reselect refers to as an input-selector.
+Here is a reselect example rewritten with Redux Lenses.
+
+```
+import { createSelector } from 'reselect'
+import todoLenses from '../lenses';
+
+export const getVisibleTodos = createSelector(
+  [ todoLenses.get('visibilityFilter').view, todoLenses.get('todos').view ],
+  (visibilityFilter, todos) => {
+    switch (visibilityFilter) {
+      case 'SHOW_ALL':
+        return todos
+      case 'SHOW_COMPLETED':
+        return todos.filter(t => t.completed)
+      case 'SHOW_ACTIVE':
+        return todos.filter(t => !t.completed)
+    }
+  }
+)
+```
+
+
+
+### <a name="framework-compatibility"></a>Framework compatibility
 Redux Lenses, like Redux, isn't specific to React.  Redux Lenses should work anywhere Redux works.
-The included connectLenses function is built to match the API of React-Redux.  Redux Lenses might not be
-compatible with the bindings for other frameworks, so you may have to write custom connect code to connect
-Redux Lenses with the components of frameworks other than React.
+The included bindLenses function is built to match the API of React-Redux's mergeProps function.
+Redux Lenses might not be compatible with the bindings for other frameworks, so you may have to write
+custom connect code to connect Redux Lenses with the components of frameworks other than React.
 
 
 
@@ -334,6 +366,12 @@ authLenses.view(['user'], state)
 
 Same as view but it gives you values for all the lenses in the group.
 
+#### connect :: [ key:String ] -> state:Object -> { key: ConnectedLens }
+
+Returns an object of Connected Lenses.  Before you can dispatch actions from
+the Connected Lens, it needs access to the dispatch function via ConnectedLens.setDispatch(dispatch).
+This is what happens inside of the bindLenses function in the examples.
+
 
 
 ## EnhancedLens class
@@ -370,6 +408,11 @@ Resets request state to:
 ```
 { inProgress: false, completed: false }
 ```
+
+### transform :: Any -> Any
+This allows you to transform a value via the EnhancedLens's map function, which
+you specify when creating the LensGroup.  This is used by the ConnectedLens and
+not something you'll likely ever use.
 
 
 ## ConnectedLens class

@@ -1,45 +1,33 @@
-import connectLenses from '../src/connect';
+import { bindLenses, isConnectedLens } from '../src/connect';
 import { lensGroup } from './test-lenses';
 import ConnectedLens from '../src/ConnectedLens';
 
 
-let connectFns, state;
+let cLens;
 
 beforeEach(() => {
-  connectFns = connectLenses([lensGroup.pick(['navDrawerOpen'])]);
-  state = { layout: { navDrawerOpen: false } };
+  cLens = new ConnectedLens(lensGroup.get('navDrawerOpen'), false);
 })
 
 
-test('connect result shape', () => {
-  expect(connectFns.length).toBe(3);
-  expect(connectFns[1]).toBeNull();
-})
+test('isConnectedLens', () => {
+  expect(isConnectedLens(cLens)).toBe(true);
+});
 
 
-test('mapStateToProps', () => {
-  const mapState = connectFns[0]();
-  let stateProps = mapState(state);
-  const cLens1 = stateProps.navDrawerOpen;
-  expect(cLens1).toBeInstanceOf(ConnectedLens);
-  state = { layout: { navDrawerOpen: false, other: 1 } };
-  stateProps = mapState(state);
-  expect(stateProps.navDrawerOpen).toBe(cLens1);
-  state = { layout: { navDrawerOpen: true } };
-  stateProps = mapState(state);
-  expect(stateProps.navDrawerOpen).not.toBe(cLens1);
-})
-
-
-test('mergeProps', () => {
-  const mapState = connectFns[0]();
-  let stateProps = mapState(state);
-  let ownProps = { other: 1 };
-  let dispatch = jest.fn();
-  const mergeProps = connectFns[2];
-  const result = mergeProps(stateProps, { dispatch }, ownProps);
-  expect(result).toHaveProperty('other');
+test('bindLenses', () => {
+  const stateProps =
+    { navDrawerOpen: cLens
+    , other1: 1
+    };
+  const dispatchProps = {};
+  const ownProps = { other2: 2 };
+  expect(() => bindLenses(stateProps, dispatchProps, ownProps)).toThrow();
+  const dispatch = jest.fn();
+  dispatchProps.dispatch = dispatch;
+  let result = bindLenses(stateProps, dispatchProps, ownProps);
+  expect(result.other1).toBe(1);
+  expect(result.other2).toBe(2);
   result.navDrawerOpen.set(true);
-  expect(dispatch).toHaveBeenCalled();
-  expect(result.navDrawerOpen.view()).toBe(false);
+  expect(dispatch.mock.calls.length).toBe(1);
 })

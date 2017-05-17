@@ -2,11 +2,30 @@ import ConnectedLens from './ConnectedLens';
 import view from 'ramda/src/view';
 
 
+export function isConnectedLens(x) {
+  return x instanceof ConnectedLens;
+};
+
+
+export function bindLenses(stateProps, dispatchProps, ownProps) {
+  if (!dispatchProps.hasOwnProperty('dispatch')) {
+    throw new Error('Redux Lenses bindLenses method unable to find dispatch.  Ensure that the 2nd argument is an object that contains dispatch.')
+  }
+  Object.keys(stateProps)
+    .filter(x => isConnectedLens(stateProps[x]))
+    .forEach(x => stateProps[x].setDispatch(dispatchProps.dispatch));
+  return Object.assign({}, ownProps, stateProps, dispatchProps);
+}
+
+
+//*************************************************************************
+// Deprecated
+//*************************************************************************
 export default function connectLenses(groupList, mapDispatch) {
 
   const lensGroup = Object.assign({}, ...groupList);
   const lensIds = Object.keys(lensGroup);
-  
+
 
   const mapState = () => {
 

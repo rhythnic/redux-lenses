@@ -1,12 +1,16 @@
 import pick from 'ramda/src/pick';
 import { viewLenses, setStore } from './main';
 import EnhancedLens from './EnhancedLens';
+import ConnectedLens from './ConnectedLens';
+import view from 'ramda/src/view';
 
 
 export default class LensGroup {
   constructor({ basePath, lenses }) {
     this.basePath = basePath;
     this.enhancedLenses = this._createEnhancedLenses(basePath, lenses);
+    this.connectedLenses = {};
+    this._connectedLensValueCache = {};
     this.checkKey = this.checkKey.bind(this);
   }
 
@@ -31,13 +35,13 @@ export default class LensGroup {
     return this.enhancedLenses[id];
   }
 
-  pick(lensKeyList) {
-    lensKeyList.forEach(this.checkKey)
-    return pick(lensKeyList, this.enhancedLenses);
+  pick(lensIdList) {
+    lensIdList.forEach(this.checkKey)
+    return pick(lensIdList, this.enhancedLenses);
   }
 
-  view(lensKeyList, ...rest) {
-    return viewLenses(this.pick(lensKeyList), ...rest);
+  view(lensIdList, ...rest) {
+    return viewLenses(this.pick(lensIdList), ...rest);
   }
 
   viewAll(...args) {
@@ -48,5 +52,19 @@ export default class LensGroup {
     const ids = Object.keys(idValObj);
     ids.forEach(this.checkKey);
     return setStore(...ids.map(id => [ this.get(id), idValObj[id] ]));
+  }
+
+  connect(lensIdList) {
+    return state => {
+      return lensIdList.reduce((acc, id) => {
+        const val = view(this.get(id).lens, state);
+        if (val !== this._connectedLensValueCache[id] || !(id in this.connectedLenses)) {
+          this._connectedLensValueCache[id] = val;
+          this.connectedLenses[id] = new ConnectedLens(this.enhancedLenses[id], val);
+        }
+        acc[id] = this.connectedLenses[id];
+        return acc;
+      }, {});
+    }
   }
 }
