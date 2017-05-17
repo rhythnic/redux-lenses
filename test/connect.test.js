@@ -1,4 +1,4 @@
-import { bindLenses, isConnectedLens } from '../src/connect';
+import { bindLenses, isConnectedLens, bindLensesAndActionCreators } from '../src/connect';
 import { lensGroup } from './test-lenses';
 import ConnectedLens from '../src/ConnectedLens';
 
@@ -30,4 +30,16 @@ test('bindLenses', () => {
   expect(result.other2).toBe(2);
   result.navDrawerOpen.set(true);
   expect(dispatch.mock.calls.length).toBe(1);
-})
+});
+
+
+test('bindLensesAndActionCreators', () => {
+  const stateProps = { navDrawerOpen: cLens };
+  const dispatch = jest.fn();
+  const dispatchProps = { dispatch };
+  const ownProps = {};
+  const actions = { someAction: () => {} }
+  let result = bindLensesAndActionCreators(actions)(stateProps, dispatchProps, ownProps);
+  result.someAction();
+  expect(dispatch.mock.calls.length).toBe(1);
+});
