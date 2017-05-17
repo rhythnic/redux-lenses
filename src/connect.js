@@ -1,5 +1,6 @@
 import ConnectedLens from './ConnectedLens';
 import view from 'ramda/src/view';
+import { bindActionCreators } from 'redux';
 
 
 export function isConnectedLens(x) {
@@ -7,10 +8,15 @@ export function isConnectedLens(x) {
 };
 
 
-export function bindLenses(stateProps, dispatchProps, ownProps) {
-  if (!dispatchProps.hasOwnProperty('dispatch')) {
-    throw new Error('Redux Lenses bindLenses method unable to find dispatch.  Ensure that the 2nd argument is an object that contains dispatch.')
+export function checkForDispatch(name, { dispatch }) {
+  if (!dispatch) {
+    throw new Error(`Redux Lenses ${name} method unable to find dispatch.  Ensure that the 2nd argument is an object that contains dispatch.`)
   }
+}
+
+
+export function bindLenses(stateProps, dispatchProps, ownProps) {
+  checkForDispatch('bindLenses', dispatchProps);
   Object.keys(stateProps)
     .filter(x => isConnectedLens(stateProps[x]))
     .forEach(x => stateProps[x].setDispatch(dispatchProps.dispatch));
@@ -18,10 +24,23 @@ export function bindLenses(stateProps, dispatchProps, ownProps) {
 }
 
 
+export function bindLensesAndActionCreators(actions = {}) {
+  return (stateProps, dispatchProps, ownProps) => {
+    checkForDispatch('bindLensesAndActionCreators', dispatchProps);
+    dispatchProps = Object.assign({}, dispatchProps, bindActionCreators(actions, dispatchProps.dispatch));
+    return bindLenses(stateProps, dispatchProps, ownProps);
+  }
+}
+
+
 //*************************************************************************
 // Deprecated
 //*************************************************************************
 export default function connectLenses(groupList, mapDispatch) {
+
+  if (!process || !process.env || process.env.NODE_ENV !== 'production') {
+    console.warn("Redux Lenses: connectLenses is deprecated.  View current v1 docs for how to connect lenses.")
+  }
 
   const lensGroup = Object.assign({}, ...groupList);
   const lensIds = Object.keys(lensGroup);

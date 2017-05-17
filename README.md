@@ -159,9 +159,8 @@ Use set(value) or set(value => nextValue) to set the value.
 // I didn't show the creation of the layout lenses.
 import layoutLenses from '../lenses';
 import authLenses from '../../auth/lenses';
-import { bindLenses } from 'redux-lenses';
+import { bindLensesAndActionCreators } from 'redux-lenses';
 import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
 import { logout } from '../../auth/actions';
 
 
@@ -198,13 +197,27 @@ function mapStateToProps(state) {
 
 export default connect(
   mapStateToProps
+  null,
+  bindLensesAndActionCreators({ logout })
+)(AppLayout);
+```
+
+LensGroup.connect takes a list of lens IDs and returns a function which in turn accepts the state object.
+When you call that fn with state, you get back and object of Connected Lenses.
+These Connected Lenses don't yet have access to dispatch.
+Use bindLenses or bindLensesAndActionCreators to give dispatch to the Connected Lenses.
+That means that you mapDispatchToProps function has to put dispatch on props.  This happens when you
+pass null, or alternatively you could explicitly put dispatch on props.
+
+```
+import { bindActionCreators } from 'redux';
+
+export default connect(
+  mapStateToProps,
   dispatch => ({ dispatch, ...bindActionCreators({ logout }, dispatch) }),
   bindLenses
 )(AppLayout);
 ```
-
-bindLenses needs access to dispatch, so dispatch needs to be put on props by your mapDispatchToProps
-function.  You can also pass null as mapDispatchToProps.
 
 
 ### <a name="action-shape"></a>Action Shape
