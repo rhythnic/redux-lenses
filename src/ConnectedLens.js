@@ -4,30 +4,41 @@
 // ******************************************************************************
 
 export default class ConnectedLens {
-  constructor(enhancedLens, value, store) {
+  constructor(enhancedLens, value) {
     this._enhancedLens = enhancedLens;
     this.value = value;
-    this._store = store;
     this.resetRequest = this.resetRequest.bind(this);
   }
 
+  setDispatch(dispatch) {
+    if (!this._dispatch) this._dispatch = dispatch;
+  }
+
   view() {
-    return this._enhancedLens.getAlteredValue(this.value);
+    return this._enhancedLens.applyMap(this.value);
   }
 
-  set(...args) {
-    return this._store.dispatch(this._enhancedLens.set(...args));
+  dispatch(...args) {
+    if (!this._dispatch) {
+      console.error(`Redux Lenses: attempted to dispatch action from ConnectedLens ${this._enhancedLens.id} without first having provided it with dispatch function.`);
+      return;
+    }
+    return this._dispatch(...args);
   }
 
-  papp(...args) {
-    return () => this.set(...args);
+  set(val) {
+    return this.dispatch(this._enhancedLens.set(val));
+  }
+
+  papp(val) {
+    return () => this.set(val);
   }
 
   request(...args) {
-    return this._store.dispatch(this._enhancedLens.request(...args));
+    return this.dispatch(this._enhancedLens.request(...args));
   }
 
   resetRequest() {
-    return this._store.dispatch(this._enhancedLens.resetRequest());
+    return this.dispatch(this._enhancedLens.resetRequest());
   }
 }
